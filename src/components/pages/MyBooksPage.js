@@ -11,6 +11,7 @@ import EmptyState from "@/components/EmptyState";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/lib/auth-context";
 import { useLibrary } from "@/lib/library-context";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
 function toValues(book) {
@@ -30,13 +31,18 @@ function MyBooksContent() {
   const [editing, setEditing] = useState(null);
   const [editValues, setEditValues] = useState(null);
   const [deleting, setDeleting] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [removing, setRemoving] = useState(false);
   // Keep the memo dependency null-safe: the compiler hoists property reads out of callbacks.
   const editingId = editing?.id ?? "";
   const deletingId = deleting?.id ?? "";
   const deletingTitle = deleting?.title ?? "";
 
   const mine = books
-    .filter((book) => book.addedBy.email === user.email)
+    .filter(
+      (book) =>
+        String(book.addedBy.email).toLowerCase() === user.email.toLowerCase()
+    )
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
   const totalCopies = mine.reduce((sum, book) => sum + book.totalCopies, 0);
@@ -55,18 +61,32 @@ function MyBooksContent() {
     setEditValues(null);
   }
 
-  function saveEdit(data) {
+  async function saveEdit(data) {
     if (!editingId) return;
-    updateBook(editingId, data);
-    toast.success(`“${data.title}” has been updated.`);
-    closeEdit();
+    setSaving(true);
+    try {
+      await updateBook(editingId, data);
+      toast.success(`“${data.title}” has been updated.`);
+      closeEdit();
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not update this book."));
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!deletingId) return;
-    deleteBook(deletingId);
-    toast.success(`“${deletingTitle}” is off the shelf.`);
-    setDeleting(null);
+    setRemoving(true);
+    try {
+      await deleteBook(deletingId);
+      toast.success(`“${deletingTitle}” is off the shelf.`);
+      setDeleting(null);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not delete this book."));
+    } finally {
+      setRemoving(false);
+    }
   }
 
   return (
@@ -204,6 +224,7 @@ function MyBooksContent() {
             submitLabel="Save changes"
             showUser={false}
             compact
+            busy={saving}
           />
         ) : null}
       </Modal>
@@ -243,10 +264,11 @@ function MyBooksContent() {
               <button
                 type="button"
                 onClick={confirmDelete}
-                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-terracotta px-6 py-3 text-[13px] font-semibold text-parchment transition hover:bg-terracotta-dark"
+                disabled={removing}
+                className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-terracotta px-6 py-3 text-[13px] font-semibold text-parchment transition hover:bg-terracotta-dark disabled:opacity-60"
               >
                 <Trash2 className="h-4 w-4" />
-                Delete listing
+                {removing ? "Deleting…" : "Delete listing"}
               </button>
             </div>
           </div>

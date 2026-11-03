@@ -16,6 +16,7 @@ import BookCover from "@/components/BookCover";
 import BookForm from "@/components/BookForm";
 import { useAuth } from "@/lib/auth-context";
 import { useLibrary } from "@/lib/library-context";
+import { apiErrorMessage } from "@/lib/api";
 import { toast } from "sonner";
 
 const initialValues = {
@@ -102,11 +103,19 @@ function AddBookContent() {
   const { user } = useAuth();
   const { addBook } = useLibrary();
   const [values, setValues] = useState(initialValues);
+  const [busy, setBusy] = useState(false);
 
-  function handleSubmit(data) {
-    const book = addBook(data, user);
-    toast.success(`“${book.title}” is now on the BookNook shelf.`);
-    router.push("/my-books");
+  async function handleSubmit(data) {
+    setBusy(true);
+    try {
+      const book = await addBook(data);
+      toast.success(`“${book.title}” is now on the BookNook shelf.`);
+      router.push("/my-books");
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not add this book."));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -165,6 +174,7 @@ function AddBookContent() {
               onSubmit={handleSubmit}
               user={user}
               submitLabel="Add to the shelf"
+              busy={busy}
             />
           </div>
 

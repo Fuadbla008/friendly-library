@@ -21,7 +21,8 @@ import Modal from "@/components/Modal";
 import PageLoader from "@/components/PageLoader";
 import { useAuth } from "@/lib/auth-context";
 import { useLibrary } from "@/lib/library-context";
-import { CATEGORIES } from "@/lib/seed";
+import { apiErrorMessage } from "@/lib/api";
+import { CATEGORIES } from "@/lib/categories";
 import { cn, formatDate, initials } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -43,15 +44,24 @@ function CopyMeter({ total, available }) {
 
 function BorrowModal({ open, onClose, book, user, dueDate }) {
   const { borrowBook } = useLibrary();
+  const [busy, setBusy] = useState(false);
 
-  function confirm() {
-    const result = borrowBook(book.id, user);
-    if (!result.ok) {
-      toast.error(result.error);
-      return;
+  async function confirm() {
+    setBusy(true);
+    try {
+      const borrow = await borrowBook(book.id);
+      toast.success(
+        `“${book.title}” is on your shelf until ${formatDate(borrow.returnDate, {
+          month: "short",
+          day: "numeric",
+        })}.`
+      );
+      onClose();
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not borrow this book."));
+    } finally {
+      setBusy(false);
     }
-    toast.success(`“${book.title}” is on your shelf for 14 days.`);
-    onClose();
   }
 
   return (
@@ -100,12 +110,12 @@ function BorrowModal({ open, onClose, book, user, dueDate }) {
       </div>
 
       <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-        <button type="button" onClick={onClose} className="btn-outline flex-1">
+        <button type="button" onClick={onClose} className="btn-outline flex-1" disabled={busy}>
           Not yet
         </button>
-        <button type="button" onClick={confirm} className="btn-brand flex-1">
+        <button type="button" onClick={confirm} className="btn-brand flex-1" disabled={busy}>
           <Check className="h-4 w-4" />
-          Confirm borrow
+          {busy ? "Borrowing…" : "Confirm borrow"}
         </button>
       </div>
     </Modal>
@@ -114,9 +124,10 @@ function BorrowModal({ open, onClose, book, user, dueDate }) {
 
 function DetailsContent({ bookId }) {
   const { user } = useAuth();
-  const { books, borrows, ready, returnBorrow } = useLibrary();
+  const { books, borrows, ready, error, returnBorrow } = useLibrary();
   const [borrowOpen, setBorrowOpen] = useState(false);
   const [borrowDue, setBorrowDue] = useState("");
+  const [returning, setReturning] = useState(false);
 
   function openBorrow() {
     setBorrowDue(
@@ -132,6 +143,22 @@ function DetailsContent({ bookId }) {
   const book = books.find((item) => item.id === bookId);
 
   if (!ready) return <PageLoader label="Pulling this book from the shelf…" />;
+
+  if (error && !book) {
+    return (
+      <div className="shell py-20">
+        <EmptyState
+          title="The shelf is not answering"
+          description={error}
+          action={
+            <Link href="/books" className="btn-brand">
+              Try the collection again
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   if (!book) {
     return (
@@ -149,22 +176,32 @@ function DetailsContent({ bookId }) {
     );
   }
 
-  const bookBorrows = borrows.filter((borrow) => borrow.bookId === book.id);
+  const userEmail = user.email.toLowerCase();
   const activeLoan = borrows.find(
-    (borrow) => borrow.bookId === book.id && borrow.userEmail === user.email
+    (borrow) =>
+      borrow.bookId === book.id &&
+      String(borrow.userEmail).toLowerCase() === userEmail
   );
-  const isOwner = book.addedBy.email === user.email;
+  const isOwner =
+    String(book.addedBy.email).toLowerCase() === userEmail;
+  const onLoan = Math.max(0, book.totalCopies - book.availableCopies);
   const available = book.availableCopies > 0;
   const category = CATEGORIES.find((item) => item.name === book.category) || CATEGORIES[0];
   const related = books
     .filter((item) => item.category === book.category && item.id !== book.id)
     .slice(0, 3);
 
-  function handleReturn() {
+  async function handleReturn() {
     if (!activeLoan) return;
-    const result = returnBorrow(activeLoan.id);
-    if (result.ok) toast.success(`“${book.title}” is back on the shelf.`);
-    else toast.error(result.error);
+    setReturning(true);
+    try {
+      await returnBorrow(activeLoan.id);
+      toast.success(`“${book.title}” is back on the shelf.`);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not return this book."));
+    } finally {
+      setReturning(false);
+    }
   }
 
   return (
@@ -220,7 +257,7 @@ function DetailsContent({ bookId }) {
                 </p>
               </div>
               <span className="ml-auto rounded-full bg-sage-light/70 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#3d6a50]">
-                {bookBorrows.length} {bookBorrows.length === 1 ? "loan" : "loans"}
+                {onLoan} {onLoan === 1 ? "copy" : "copies"} on loan
               </span>
             </div>
           </div>
@@ -295,8 +332,13 @@ function DetailsContent({ bookId }) {
                 <div className="flex shrink-0 items-center gap-2.5">
                   {activeLoan ? (
                     <>
-                      <button type="button" onClick={handleReturn} className="btn-outline">
-                        Return book
+                      <button
+                        type="button"
+                        onClick={handleReturn}
+                        className="btn-outline"
+                        disabled={returning}
+                      >
+                        {returning ? "Returning…" : "Return book"}
                       </button>
                       <Link href="/my-borrows" className="btn-brand">
                         <LibraryBig className="h-4 w-4" />

@@ -16,10 +16,11 @@ import EmptyState from "@/components/EmptyState";
 import Modal from "@/components/Modal";
 import { useAuth } from "@/lib/auth-context";
 import { useLibrary } from "@/lib/library-context";
+import { apiErrorMessage } from "@/lib/api";
 import { daysUntil, formatDate, loanStatus } from "@/lib/utils";
 import { toast } from "sonner";
 
-function ReturnModal({ borrow, book, open, onClose, onConfirm }) {
+function ReturnModal({ borrow, book, open, onClose, onConfirm, busy }) {
   return (
     <Modal
       open={open}
@@ -47,12 +48,12 @@ function ReturnModal({ borrow, book, open, onClose, onConfirm }) {
             </div>
           </div>
           <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-            <button type="button" onClick={onClose} className="btn-outline flex-1">
+            <button type="button" onClick={onClose} className="btn-outline flex-1" disabled={busy}>
               Keep reading
             </button>
-            <button type="button" onClick={onConfirm} className="btn-brand flex-1">
+            <button type="button" onClick={onConfirm} className="btn-brand flex-1" disabled={busy}>
               <Check className="h-4 w-4" />
-              Return book
+              {busy ? "Returning…" : "Return book"}
             </button>
           </div>
         </div>
@@ -63,11 +64,15 @@ function ReturnModal({ borrow, book, open, onClose, onConfirm }) {
 
 function MyBorrowsContent() {
   const { user } = useAuth();
-  const { books, borrows, returnBorrow } = useLibrary();
+  const { books, borrows, borrowError, returnBorrow } = useLibrary();
   const [returning, setReturning] = useState(null);
+  const [busy, setBusy] = useState(false);
 
   const mine = borrows
-    .filter((borrow) => borrow.userEmail === user.email)
+    .filter(
+      (borrow) =>
+        String(borrow.userEmail).toLowerCase() === user.email.toLowerCase()
+    )
     .sort((a, b) => new Date(a.returnDate) - new Date(b.returnDate));
 
   const reviews = mine.map((borrow) => ({
@@ -82,15 +87,18 @@ function MyBorrowsContent() {
   }).length;
   const overdue = mine.filter((borrow) => daysUntil(borrow.returnDate) < 0).length;
 
-  function confirmReturn() {
+  async function confirmReturn() {
     if (!returning) return;
     const title = returning.bookTitle;
-    const result = returnBorrow(returning.id);
-    if (result.ok) {
+    setBusy(true);
+    try {
+      await returnBorrow(returning.id);
       toast.success(`“${title}” is back on the shelf.`);
       setReturning(null);
-    } else {
-      toast.error(result.error);
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "Could not return this book."));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -158,6 +166,11 @@ function MyBorrowsContent() {
       </section>
 
       <section className="shell mt-9">
+        {borrowError ? (
+          <div className="mb-5 rounded-2xl border border-[#e4b7a8] bg-[#f4dfd6] px-5 py-4 text-[12px] font-medium text-[#9c3f27]">
+            {borrowError}
+          </div>
+        ) : null}
         {reviews.length ? (
           <>
             <div className="hidden overflow-hidden rounded-2xl border border-line bg-parchment lg:block">
@@ -314,6 +327,7 @@ function MyBorrowsContent() {
         open={Boolean(returning)}
         onClose={() => setReturning(null)}
         onConfirm={confirmReturn}
+        busy={busy}
       />
     </div>
   );

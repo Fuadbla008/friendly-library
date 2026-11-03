@@ -1,126 +1,123 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
-import { SEED_BOOKS, SEED_BORROWS } from "@/lib/seed";
-
-const BOOKS_KEY = "booknook:v1:books";
-const BORROWS_KEY = "booknook:v1:borrows";
-const LOAN_DAYS = 14;
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 
 const LibraryContext = createContext(null);
 
-function makeId(prefix) {
-  if (typeof crypto !== "undefined" && crypto.randomUUID) {
-    return `${prefix}-${crypto.randomUUID()}`;
-  }
-  return `${prefix}-${Date.now()}`;
-}
-
-function readStored(key, fallback) {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
 export function LibraryProvider({ children }) {
-  const [books, setBooks] = useState(SEED_BOOKS);
-  const [borrows, setBorrows] = useState(SEED_BORROWS);
+  const { user, ready: authReady } = useAuth();
+  const [books, setBooks] = useState([]);
+  const [borrows, setBorrows] = useState([]);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(null);
+  const [borrowError, setBorrowError] = useState(null);
+
+  const refreshBooks = useCallback(async () => {
+    const { data } = await api.get("/books");
+    setBooks(data);
+    setError(null);
+    return data;
+  }, []);
+
+  const refreshBorrows = useCallback(async () => {
+    if (!user) return [];
+    const { data } = await api.get("/borrows");
+    setBorrows(data);
+    setBorrowError(null);
+    return data;
+  }, [user]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrate the mock library once from localStorage
-    setBooks(readStored(BOOKS_KEY, SEED_BOOKS));
-    setBorrows(readStored(BORROWS_KEY, SEED_BORROWS));
-    setReady(true);
+    let alive = true;
+
+    async function loadBooks() {
+      try {
+        const { data } = await api.get("/books");
+        if (alive) setBooks(data);
+      } catch (err) {
+        if (alive) {
+          setError(
+            err?.response?.data?.message ||
+              "Could not load the shelf. Is the API running?"
+          );
+        }
+      } finally {
+        if (alive) setReady(true);
+      }
+    }
+
+    loadBooks();
+    return () => {
+      alive = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
-    try {
-      window.localStorage.setItem(BOOKS_KEY, JSON.stringify(books));
-      window.localStorage.setItem(BORROWS_KEY, JSON.stringify(borrows));
-    } catch {
-      // A very large cover image can exceed localStorage; the in-memory library still works.
-    }
-  }, [books, borrows, ready]);
+    if (!authReady || !user) return;
 
-  function getBook(id) {
-    return books.find((book) => book.id === id);
+    let alive = true;
+
+    async function loadBorrows() {
+      try {
+        const { data } = await api.get("/borrows");
+        if (alive) {
+          setBorrows(data);
+          setBorrowError(null);
+        }
+      } catch (err) {
+        if (alive) {
+          setBorrowError(
+            err?.response?.data?.message || "Could not load your borrowed books."
+          );
+        }
+      }
+    }
+
+    loadBorrows();
+    return () => {
+      alive = false;
+    };
+  }, [authReady, user]);
+
+  async function getBook(id) {
+    const { data } = await api.get(`/books/${encodeURIComponent(id)}`);
+    return data;
   }
 
-  function addBook(data, user) {
-    const totalCopies = Math.max(1, Number(data.totalCopies) || 1);
-    const book = {
-      id: makeId("book"),
-      title: data.title.trim(),
-      author: data.author.trim(),
-      category: data.category,
-      image: data.image || "",
-      description: data.description.trim(),
-      totalCopies,
-      availableCopies: totalCopies,
-      addedBy: { name: user.name, email: user.email },
-      createdAt: new Date().toISOString(),
-    };
+  async function addBook(data) {
+    const { data: book } = await api.post("/books", data);
     setBooks((current) => [book, ...current]);
     return book;
   }
 
-  function updateBook(id, data) {
+  async function updateBook(id, data) {
+    const { data: book } = await api.patch(
+      `/books/${encodeURIComponent(id)}`,
+      data
+    );
     setBooks((current) =>
-      current.map((book) => {
-        if (book.id !== id) return book;
-        const totalCopies = Math.max(1, Number(data.totalCopies) || 1);
-        const onLoan = Math.max(0, book.totalCopies - book.availableCopies);
-        return {
-          ...book,
-          title: data.title.trim(),
-          author: data.author.trim(),
-          category: data.category,
-          image: data.image || "",
-          description: data.description.trim(),
-          totalCopies,
-          availableCopies: Math.max(0, totalCopies - onLoan),
-        };
-      })
+      current.map((item) => (item.id === id ? book : item))
     );
+    return book;
   }
 
-  function deleteBook(id) {
-    setBooks((current) => current.filter((book) => book.id !== id));
-    setBorrows((current) => current.filter((borrow) => borrow.bookId !== id));
+  async function deleteBook(id) {
+    await api.delete(`/books/${encodeURIComponent(id)}`);
+    setBooks((current) => current.filter((item) => item.id !== id));
+    setBorrows((current) => current.filter((item) => item.bookId !== id));
   }
 
-  function borrowBook(bookId, user) {
-    const book = getBook(bookId);
-    if (!book) return { ok: false, error: "That book is no longer on the shelf." };
-    if (book.availableCopies <= 0) {
-      return { ok: false, error: "No copies are available right now." };
-    }
-    const alreadyBorrowed = borrows.some(
-      (borrow) =>
-        borrow.bookId === bookId && borrow.userEmail === user.email
-    );
-    if (alreadyBorrowed) {
-      return { ok: false, error: "You already have this book borrowed." };
-    }
-
-    const now = new Date();
-    const due = new Date(now.getTime() + LOAN_DAYS * 86400000);
-    const borrow = {
-      id: makeId("borrow"),
-      bookId: book.id,
-      bookTitle: book.title,
-      bookImage: book.image,
-      userEmail: user.email,
-      userName: user.name,
-      borrowDate: now.toISOString(),
-      returnDate: due.toISOString(),
-    };
-
+  async function borrowBook(bookId) {
+    const { data: borrow } = await api.post("/borrows", { bookId });
+    setBorrows((current) => [borrow, ...current]);
     setBooks((current) =>
       current.map((item) =>
         item.id === bookId
@@ -128,40 +125,45 @@ export function LibraryProvider({ children }) {
           : item
       )
     );
-    setBorrows((current) => [borrow, ...current]);
-    return { ok: true, borrow };
+    return borrow;
   }
 
-  function returnBorrow(borrowId) {
+  async function returnBorrow(borrowId) {
     const borrow = borrows.find((item) => item.id === borrowId);
-    if (!borrow) return { ok: false, error: "That loan could not be found." };
+    await api.delete(`/borrows/${encodeURIComponent(borrowId)}`);
     setBorrows((current) => current.filter((item) => item.id !== borrowId));
-    setBooks((current) =>
-      current.map((book) =>
-        book.id === borrow.bookId
-          ? {
-              ...book,
-              availableCopies: Math.min(
-                book.totalCopies,
-                book.availableCopies + 1
-              ),
-            }
-          : book
-      )
-    );
-    return { ok: true };
+
+    if (borrow) {
+      setBooks((current) =>
+        current.map((item) =>
+          item.id === borrow.bookId
+            ? {
+                ...item,
+                availableCopies: Math.min(
+                  item.totalCopies,
+                  item.availableCopies + 1
+                ),
+              }
+            : item
+        )
+      );
+    }
   }
 
   const value = {
     books,
-    borrows,
+    borrows: user ? borrows : [],
     ready,
+    error,
+    borrowError: user ? borrowError : null,
     getBook,
     addBook,
     updateBook,
     deleteBook,
     borrowBook,
     returnBorrow,
+    refreshBooks,
+    refreshBorrows,
   };
 
   return (

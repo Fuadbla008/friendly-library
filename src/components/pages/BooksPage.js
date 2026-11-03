@@ -7,7 +7,7 @@ import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 import BookCard from "@/components/BookCard";
 import EmptyState from "@/components/EmptyState";
 import { useLibrary } from "@/lib/library-context";
-import { CATEGORIES } from "@/lib/seed";
+import { CATEGORIES } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
 const sortOptions = [
@@ -18,7 +18,7 @@ const sortOptions = [
 
 export default function BooksPage() {
   const searchParams = useSearchParams();
-  const { books, ready } = useLibrary();
+  const { books, ready, error } = useLibrary();
   const initialCategory = searchParams.get("category");
   const [category, setCategory] = useState(
     CATEGORIES.some((item) => item.name === initialCategory)
@@ -203,6 +203,20 @@ export default function BooksPage() {
               <div key={index} className="surface h-[430px] animate-pulse" />
             ))}
           </div>
+        ) : error && !books.length ? (
+          <EmptyState
+            title="The shelf is not answering"
+            description={error}
+            action={
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="btn-brand"
+              >
+                Try again
+              </button>
+            }
+          />
         ) : results.length ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((book, index) => (
