@@ -3,8 +3,9 @@
 import { useId, useRef, useState } from "react";
 import { ImagePlus, Link2, Trash2, Upload, UserRound } from "lucide-react";
 import BookCover from "@/components/BookCover";
-import { CATEGORIES } from "@/lib/seed";
-import { cn, resizeImage } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/categories";
+import { cn } from "@/lib/utils";
+import { uploadCover } from "@/lib/upload";
 import { toast } from "sonner";
 
 const blankErrors = {};
@@ -18,6 +19,7 @@ export default function BookForm({
   showUser = true,
   user,
   compact = false,
+  busy = false,
 }) {
   const fieldPrefix = useId().replace(/:/g, "");
   const fieldId = (name) => `book-${name}-${fieldPrefix}`;
@@ -44,11 +46,11 @@ export default function BookForm({
     }
     setUploading(true);
     try {
-      const dataUrl = await resizeImage(file);
-      update("image", dataUrl);
-      toast.success("Cover ready. Uploads connect to imgbb with the live API.");
-    } catch {
-      toast.error("That image could not be read. Try another file.");
+      const url = await uploadCover(file);
+      update("image", url);
+      toast.success("Cover uploaded.");
+    } catch (error) {
+      toast.error(error.message || "That image could not be uploaded.");
     } finally {
       setUploading(false);
     }
@@ -96,7 +98,7 @@ export default function BookForm({
               Sharing as
             </p>
             <p className="truncate text-[12px] font-semibold text-ink">
-              {user.name} <span className="font-normal text-ink/70">Â· {user.email}</span>
+              {user.name} <span className="font-normal text-ink/70">· {user.email}</span>
             </p>
           </div>
           <span className="hidden rounded-full bg-parchment px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.12em] text-ink/70 sm:block">
@@ -191,7 +193,7 @@ export default function BookForm({
           {errors.description ? (
             <p className="field-error mt-0">{errors.description}</p>
           ) : (
-            <p className="text-[10px] text-ink/70">Real words only â€” no placeholder copy.</p>
+            <p className="text-[10px] text-ink/70">Real words only — no placeholder copy.</p>
           )}
           <p className="text-[10px] tabular-nums text-ink/70">
             {values.description.length}/500
@@ -228,7 +230,7 @@ export default function BookForm({
                   className="inline-flex items-center gap-1.5 rounded-full bg-forest px-3 py-1.5 text-[10px] font-semibold text-parchment transition hover:bg-forest-deep disabled:opacity-50"
                 >
                   <Upload className="h-3 w-3" />
-                  {uploading ? "Preparingâ€¦" : values.image ? "Replace" : "Upload"}
+                  {uploading ? "Uploading…" : values.image ? "Replace" : "Upload"}
                 </button>
                 {values.image ? (
                   <button
@@ -250,7 +252,7 @@ export default function BookForm({
             <input
               value={values.image.startsWith("data:") ? "" : values.image}
               onChange={(event) => update("image", event.target.value)}
-              placeholder="https://â€¦ cover image URL"
+              placeholder="https://… cover image URL"
               aria-label="Cover image URL"
               className="h-9 w-full rounded-lg border border-line bg-parchment/60 pl-8 pr-3 text-[11px] text-ink placeholder:text-ink/70 focus:border-terracotta/60 focus:bg-white focus:outline-none focus:ring-4 focus:ring-terracotta/10"
             />
@@ -269,15 +271,14 @@ export default function BookForm({
 
       <div className="flex flex-col-reverse gap-2 border-t border-line/70 pt-4 sm:flex-row sm:justify-end">
         {onCancel ? (
-          <button type="button" onClick={onCancel} className="btn-outline">
+          <button type="button" onClick={onCancel} className="btn-outline" disabled={busy}>
             Cancel
           </button>
         ) : null}
-        <button type="submit" className="btn-brand">
-          {submitLabel}
+        <button type="submit" className="btn-brand" disabled={busy || uploading}>
+          {busy ? "Saving…" : submitLabel}
         </button>
       </div>
     </form>
   );
 }
-
