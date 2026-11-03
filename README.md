@@ -1,34 +1,69 @@
 # BookNook
 
-A warm, bookish shared library. Browse the shelf, borrow a story for fourteen days, and pass it on when you are done.
+BookNook is a friendly shared library. Readers browse the shelf, add books from
+their own collection, borrow a copy for 14 days, and return it for the next
+person.
 
-**Live site:** https://booknook-client.vercel.app — update this line with the final Vercel URL after deployment.
+**Live site:** https://YOUR-CLIENT.vercel.app (replace after deployment)
+
+The client is a Next.js 16 App Router app. It talks to a separate Express +
+MongoDB API and uses BetterAuth for email/password and Google sign-in.
 
 ## Features
 
-- **An editorial home page** with a three-slide Swiper hero, new arrivals, a borrowing walkthrough, and browsable shelves.
-- **A searchable catalogue** with category filters, sort options, and a responsive three-column grid of equal-height cards.
-- **Full book details** including cover, category, description, owner, copy counter, and a guided borrow modal.
-- **Borrow and return in two clicks** with duplicate-borrow and zero-availability guards, plus a nightstand view of every active loan.
-- **Share your own books** with a live preview, imgbb-ready cover upload, and per-title copy counts.
-- **Edit and delete your listings** through the same form and a custom confirmation modal — never a browser dialog.
-- **Email and Google sign-in** built on a BetterAuth-shaped client, with private routes that resolve the session before redirecting.
-- **Feedback everywhere** with Sonner toasts, custom modals, a custom 404, and page titles in the `BookNook | …` format.
-- **Accessible by default:** keyboard-friendly navigation, visible focus rings, labelled controls, and WCAG AA colour contrast across the app.
-
-## Design direction
-
-BookNook is styled as a reading room rather than a dashboard. Fraunces carries the headlines, Geist keeps the interface quiet, and the palette stays close to paper: cream `#f6f0e4`, ink `#172621`, forest `#1d3b32`, and a deep terracotta `#a94a2b` for action. Tailwind v4 and DaisyUI provide the token layer through a custom `booknook` theme in `src/app/globals.css`.
+- Editorial home page with a Swiper hero, new arrivals from the API, and
+  category shelves.
+- Searchable catalogue with category filters, sorting, and a responsive
+  three-column grid.
+- Full book detail pages with cover, description, owner, and live copy counts.
+- Borrow and return flows with duplicate-borrow and zero-availability errors
+  shown as toasts.
+- Add, edit, and delete your own listings, with cover uploads through imgbb.
+- BetterAuth email/password and Google sign-in on top of MongoDB.
+- JWT bearer tokens on private API calls, with private routes that wait for the
+  session before redirecting.
+- Custom 404, page titles in the `BookNook | Page` format, Sonner toasts, and
+  custom modals instead of browser dialogs.
+- Accessible controls, keyboard-friendly navigation, and WCAG AA colour
+  contrast.
 
 ## Tech stack
 
 - Next.js 16 (App Router, React Compiler, Cache Components)
 - React 19 and JavaScript
 - Tailwind CSS v4 with DaisyUI 5
-- Swiper, Sonner, Lucide, and Framer Motion
-- BetterAuth, Axios, and imgbb integrations ready for the API
+- BetterAuth with the MongoDB adapter and JWT plugin
+- Axios, Swiper, Sonner, Lucide, and Framer Motion
+- Express + MongoDB API in a separate repository
 
-The Express + MongoDB service described in `agent.md` lives in a separate server repository. Until it is connected, the client runs on a local mock layer that mirrors the documented API contract.
+## Environment
+
+Copy `.env.example` to `.env.local` and fill in the values:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000
+NEXT_PUBLIC_IMGBB_API_KEY=your-imgbb-key
+
+BETTER_AUTH_URL=http://localhost:3000
+BETTER_AUTH_SECRET=at-least-32-random-characters
+MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster.mongodb.net/
+MONGODB_DB=friendly_library
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+```
+
+`BETTER_AUTH_URL` is the client origin, not the API origin. The Express server
+reads the public keys from `<BETTER_AUTH_URL>/api/auth/jwks`, so the two values
+must match.
+
+Google Cloud Console needs this redirect URI:
+
+```text
+http://localhost:3000/api/auth/callback/google
+```
+
+Add the deployed callback as a second URI when you go live.
 
 ## Run locally
 
@@ -37,7 +72,8 @@ npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000). The API should be running
+on [http://localhost:5000](http://localhost:5000).
 
 Other scripts:
 
@@ -47,26 +83,50 @@ npm start       # serve the production build
 npm run lint    # ESLint 9 flat config
 ```
 
-No environment file is required for the mock experience. When the API is ready, set `NEXT_PUBLIC_API_URL` to the server origin.
+## API contract
 
-## Demo account
+The client uses these routes from the separate API:
 
-Use **Enter as Ava** on the login page, or sign in with `ava@booknook.demo` and any password. Data is stored in `localStorage` so borrowing, adding, editing, and returning all survive a reload.
+| Method | Route | Access |
+|---|---|---|
+| GET | `/books` | Public |
+| GET | `/books/:id` | Public |
+| POST | `/books` | JWT |
+| PATCH | `/books/:id` | JWT + owner |
+| DELETE | `/books/:id` | JWT + owner |
+| POST | `/borrows` | JWT |
+| GET | `/borrows` | JWT |
+| DELETE | `/borrows/:id` | JWT + borrower |
 
-## Project structure
-
-```text
-src/
-├── app/
-│   ├── (main)/            # public shell with navbar and footer
-│   ├── (auth)/            # split-screen login and register layout
-│   ├── providers.js       # auth, library, and toast providers
-│   ├── not-found.js       # custom 404
-│   └── globals.css        # DaisyUI theme, tokens, and utilities
-├── components/            # navbar, footer, cards, modals, forms, sections
-└── lib/                   # mock auth, library store, seed data, helpers
-```
+New arrivals call `GET /books?limit=6&sort=-createdAt`, so MongoDB does the sort
+and limit. The owner and borrower identity always come from the verified JWT,
+not from the request body.
 
 ## Deployment
 
-Deploy the client to Vercel and point `NEXT_PUBLIC_API_URL` at the Render-hosted API. Add the Vercel origin to BetterAuth's `trustedOrigins` so Google sign-in can complete the redirect.
+Client on Vercel:
+
+```env
+NEXT_PUBLIC_API_URL=https://YOUR-SERVER.onrender.com
+NEXT_PUBLIC_IMGBB_API_KEY=...
+BETTER_AUTH_URL=https://YOUR-CLIENT.vercel.app
+BETTER_AUTH_SECRET=...
+MONGODB_URI=...
+MONGODB_DB=friendly_library
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+```
+
+Server on Render:
+
+```env
+NODE_ENV=production
+MONGODB_URI=...
+MONGODB_DB=friendly_library
+BETTER_AUTH_URL=https://YOUR-CLIENT.vercel.app
+CLIENT_ORIGINS=https://YOUR-CLIENT.vercel.app
+LOAN_DAYS=14
+```
+
+After deploying, register a real account, load `/my-books` and `/my-borrows`
+again, and test borrow, double borrow, return, and the last-copy state.
