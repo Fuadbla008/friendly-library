@@ -1,16 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import BookCard from "@/components/BookCard";
 import SectionHeading from "@/components/SectionHeading";
-import { useLibrary } from "@/lib/library-context";
+import { api, apiErrorMessage } from "@/lib/api";
 
 export default function NewArrivals() {
-  const { books, ready } = useLibrary();
-  const arrivals = [...books]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 6);
+  const [arrivals, setArrivals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let alive = true;
+
+    async function loadArrivals() {
+      try {
+        const { data } = await api.get("/books?limit=6&sort=-createdAt");
+        if (alive) setArrivals(data);
+      } catch (err) {
+        if (alive) {
+          setError(apiErrorMessage(err, "Could not load the new arrivals."));
+        }
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+
+    loadArrivals();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   return (
     <section className="shell py-20 sm:py-24">
@@ -31,8 +53,14 @@ export default function NewArrivals() {
         }
       />
 
+      {error ? (
+        <p className="mt-6 rounded-2xl border border-[#e4b7a8] bg-[#f4dfd6] px-5 py-4 text-[12px] font-medium text-[#9c3f27]">
+          {error}
+        </p>
+      ) : null}
+
       <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {!ready
+        {loading
           ? Array.from({ length: 6 }).map((_, index) => (
               <div key={index} className="surface h-[430px] animate-pulse" />
             ))
@@ -40,6 +68,12 @@ export default function NewArrivals() {
               <BookCard key={book.id} book={book} priority={index < 3} />
             ))}
       </div>
+
+      {!loading && !error && !arrivals.length ? (
+        <p className="mt-8 text-center text-[13px] text-ink/70">
+          The shelf is empty right now. Add the first book and start the collection.
+        </p>
+      ) : null}
     </section>
   );
 }
