@@ -20,7 +20,6 @@ export function AuthProvider({ children }) {
   const value = {
     user,
     ready: !isPending,
-    isLoggedIn: Boolean(user),
     login: (email, password) =>
       authClient.signIn.email({
         email: email.trim().toLowerCase(),

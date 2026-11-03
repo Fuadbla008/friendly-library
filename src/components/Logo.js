@@ -8,7 +8,7 @@ export default function Logo({ tone = "dark", className, href = "/" }) {
     <Link
       href={href}
       className={cn("group inline-flex items-center gap-2.5", className)}
-      aria-label="BookNook home"
+      aria-label="Friendly Library home"
     >
       <span
         className={cn(
@@ -43,11 +43,11 @@ export default function Logo({ tone = "dark", className, href = "/" }) {
       </span>
       <span
         className={cn(
-          "font-display text-[23px] font-semibold leading-none tracking-[-0.02em]",
+          "font-display text-[20px] font-semibold leading-none tracking-[-0.02em] sm:text-[22px]",
           isLight ? "text-parchment" : "text-ink"
         )}
       >
-        BookNook<span className="text-terracotta">.</span>
+        Friendly Library<span className="text-terracotta">.</span>
       </span>
     </Link>
   );

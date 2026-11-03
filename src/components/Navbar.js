@@ -325,7 +325,7 @@ export default function Navbar() {
         open={profileModal}
         onClose={() => setProfileModal(false)}
         title="Your library card"
-        description="A quick look at your reading life at BookNook."
+        description="A quick look at your reading life at Friendly Library."
       >
         {user ? (
           <div>
@@ -379,7 +379,7 @@ export default function Navbar() {
               className="mt-4 inline-flex w-full items-center justify-center gap-2 text-[12px] font-semibold text-ink/70 transition hover:text-terracotta"
             >
               <LogOut className="h-3.5 w-3.5" />
-              Sign out of BookNook
+              Sign out of Friendly Library
             </button>
           </div>
         ) : null}

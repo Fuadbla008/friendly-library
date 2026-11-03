@@ -3,22 +3,11 @@ import { ArrowUpRight } from "lucide-react";
 import BookCover from "@/components/BookCover";
 import { cn } from "@/lib/utils";
 
-export default function BookCard({
-  book,
-  priority = false,
-  actions,
-  className,
-  sizes,
-}) {
+export default function BookCard({ book, priority = false, actions }) {
   const available = book.availableCopies > 0;
 
   return (
-    <article
-      className={cn(
-        "group relative flex h-full flex-col rounded-[20px] border border-line/80 bg-parchment p-3 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset] transition duration-500 hover:-translate-y-1.5 hover:border-line hover:shadow-[0_30px_50px_-34px_rgba(23,38,33,0.55)]",
-        className
-      )}
-    >
+    <article className="group relative flex h-full flex-col rounded-[20px] border border-line/80 bg-parchment p-3 shadow-[0_1px_0_rgba(255,255,255,0.6)_inset] transition duration-500 hover:-translate-y-1.5 hover:border-line hover:shadow-[0_30px_50px_-34px_rgba(23,38,33,0.55)]">
       <Link
         href={`/books/${book.id}`}
         className="absolute inset-0 z-10 rounded-[20px]"
@@ -26,7 +15,7 @@ export default function BookCard({
       />
 
       <div className="relative">
-        <BookCover book={book} priority={priority} sizes={sizes} />
+        <BookCover book={book} priority={priority} />
         <span className="absolute left-3 top-3 z-[15] rounded-full bg-parchment/95 px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.15em] text-ink/70 shadow-sm backdrop-blur">
           {book.category}
         </span>

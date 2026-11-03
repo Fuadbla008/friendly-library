@@ -6,7 +6,7 @@ import HowItWorks from "@/components/home/HowItWorks";
 import TopCategories from "@/components/home/TopCategories";
 
 export const metadata = {
-  title: { absolute: "BookNook | Home" },
+  title: { absolute: "Friendly Library | Home" },
 };
 
 export default function HomePage() {
@@ -23,7 +23,7 @@ export default function HomePage() {
             share it.”
           </p>
           <footer className="mt-5 text-[10px] font-semibold uppercase tracking-[0.22em] text-ink/70">
-            The BookNook promise
+            The Friendly Library promise
           </footer>
         </blockquote>
       </section>

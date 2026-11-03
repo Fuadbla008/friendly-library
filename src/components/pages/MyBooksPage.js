@@ -33,7 +33,6 @@ function MyBooksContent() {
   const [deleting, setDeleting] = useState(null);
   const [saving, setSaving] = useState(false);
   const [removing, setRemoving] = useState(false);
-  // Keep the memo dependency null-safe: the compiler hoists property reads out of callbacks.
   const editingId = editing?.id ?? "";
   const deletingId = deleting?.id ?? "";
   const deletingTitle = deleting?.title ?? "";

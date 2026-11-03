@@ -151,7 +151,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() =>
-                toast("Password reset emails are not set up yet. Contact hello@booknook.app for help.")
+                toast("Password reset emails are not set up yet. Contact hello@friendlylibrary.app for help.")
               }
               className="text-[10px] font-semibold text-terracotta/80 transition hover:text-terracotta"
             >
@@ -185,7 +185,7 @@ export default function LoginPage() {
         </div>
 
         <button type="submit" className="btn-brand w-full" disabled={busy}>
-          {busy ? "Logging in…" : "Log in to BookNook"}
+          {busy ? "Logging in…" : "Log in to Friendly Library"}
           <MoveRight className="h-4 w-4" />
         </button>
       </form>

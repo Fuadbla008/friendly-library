@@ -497,7 +497,7 @@ Checklist:
    error.
 4. Google redirect URI must be the deployed auth callback.
 5. Register a real account after deployment; the old demo users
-   (`ava@booknook.demo`) do not exist in BetterAuth.
+   (`ava@friendlylibrary.demo`) do not exist in BetterAuth.
 6. `npm run build` in the client, then test:
    - reload `/my-books`, `/my-borrows`, `/books/:id` while logged in
    - double-borrow the same book → error toast
@@ -509,7 +509,7 @@ Checklist:
 Use the text below in the client repo after reading its `AGENTS.md` and
 `agent.md`:
 
-> Connect the existing BookNook Next.js client to the finished Express API.
+> Connect the existing Friendly Library Next.js client to the finished Express API.
 > Read `C:\workspace\assignment\friendly-library-server\docs\API.md` and
 > `C:\workspace\assignment\friendly-library-server\docs\FRONTEND_INTEGRATION.md`
 > first. Implement BetterAuth with the MongoDB adapter, the JWT plugin, email +

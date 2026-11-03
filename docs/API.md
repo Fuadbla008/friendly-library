@@ -1,4 +1,4 @@
-# BookNook API reference
+# Friendly Library API reference
 
 Base URL: `http://localhost:5000` in development. All responses are JSON.
 
@@ -35,7 +35,7 @@ Book:
   "description": "A shepherd boy ...",
   "totalCopies": 3,
   "availableCopies": 2,
-  "addedBy": { "name": "Rahim Ahmed", "email": "rahim@booknook.com" },
+  "addedBy": { "name": "Rahim Ahmed", "email": "rahim@friendlylibrary.com" },
   "createdAt": "2025-01-10T10:30:00.000Z",
   "updatedAt": "2026-11-03T10:00:00.000Z"
 }

@@ -3,7 +3,7 @@ import { ArrowLeft, BookOpen } from "lucide-react";
 import Logo from "@/components/Logo";
 
 export const metadata = {
-  title: { absolute: "BookNook | Page Not Found" },
+  title: { absolute: "Friendly Library | Page Not Found" },
 };
 
 export default function NotFound() {
@@ -35,7 +35,7 @@ export default function NotFound() {
         </p>
         <Link href="/" className="btn-brand mt-8">
           <ArrowLeft className="h-4 w-4" />
-          Back to the library
+          Back to Home
         </Link>
       </main>
     </div>

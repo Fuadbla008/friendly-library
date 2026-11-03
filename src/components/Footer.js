@@ -128,8 +128,8 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-sage" />
-                <a href="mailto:hello@booknook.app" className="transition hover:text-parchment">
-                  hello@booknook.app
+                <a href="mailto:hello@friendlylibrary.app" className="transition hover:text-parchment">
+                  hello@friendlylibrary.app
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
@@ -143,7 +143,7 @@ export default function Footer() {
         </div>
 
         <div className="flex flex-col gap-3 border-t border-parchment/10 py-6 text-[11px] text-parchment/70 sm:flex-row sm:items-center sm:justify-between">
-          <p>© 2026 BookNook. Stories belong to everyone.</p>
+          <p>© 2026 Friendly Library. Stories belong to everyone.</p>
           <p className="font-display text-[13px] italic tracking-wide text-parchment/70">
             Keep turning pages.
           </p>

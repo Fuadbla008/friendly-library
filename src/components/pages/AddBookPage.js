@@ -109,7 +109,7 @@ function AddBookContent() {
     setBusy(true);
     try {
       const book = await addBook(data);
-      toast.success(`“${book.title}” is now on the BookNook shelf.`);
+      toast.success(`“${book.title}” is now on the Friendly Library shelf.`);
       router.push("/my-books");
     } catch (error) {
       toast.error(apiErrorMessage(error, "Could not add this book."));
@@ -215,7 +215,7 @@ function AddBookContent() {
                 “A book on a shelf is a conversation waiting to start.”
               </p>
               <p className="mt-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-gold">
-                The BookNook shelf
+                The Friendly Library shelf
               </p>
             </div>
           </aside>

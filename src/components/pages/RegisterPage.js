@@ -82,7 +82,6 @@ export default function RegisterPage() {
         return;
       }
 
-      // The assignment expects a fresh login after registration.
       await logout();
       toast.success("Your library card is ready. Log in to start borrowing.");
       router.push(loginHref);
@@ -149,7 +148,7 @@ export default function RegisterPage() {
               id="register-name"
               value={values.name}
               onChange={(event) => update("name", event.target.value)}
-              placeholder="Ava Reader"
+              placeholder="Your name"
               autoComplete="name"
               className={cn("field pl-10", errors.name && "border-terracotta/70 ring-4 ring-terracotta/10")}
             />

@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 
@@ -19,21 +13,6 @@ export function LibraryProvider({ children }) {
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(null);
   const [borrowError, setBorrowError] = useState(null);
-
-  const refreshBooks = useCallback(async () => {
-    const { data } = await api.get("/books");
-    setBooks(data);
-    setError(null);
-    return data;
-  }, []);
-
-  const refreshBorrows = useCallback(async () => {
-    if (!user) return [];
-    const { data } = await api.get("/borrows");
-    setBorrows(data);
-    setBorrowError(null);
-    return data;
-  }, [user]);
 
   useEffect(() => {
     let alive = true;
@@ -86,11 +65,6 @@ export function LibraryProvider({ children }) {
       alive = false;
     };
   }, [authReady, user]);
-
-  async function getBook(id) {
-    const { data } = await api.get(`/books/${encodeURIComponent(id)}`);
-    return data;
-  }
 
   async function addBook(data) {
     const { data: book } = await api.post("/books", data);
@@ -156,14 +130,11 @@ export function LibraryProvider({ children }) {
     ready,
     error,
     borrowError: user ? borrowError : null,
-    getBook,
     addBook,
     updateBook,
     deleteBook,
     borrowBook,
     returnBorrow,
-    refreshBooks,
-    refreshBorrows,
   };
 
   return (

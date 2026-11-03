@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ChevronDown, Search, SlidersHorizontal, X } from "lucide-react";
 import BookCard from "@/components/BookCard";
 import EmptyState from "@/components/EmptyState";
@@ -28,20 +28,17 @@ export default function BooksPage() {
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("newest");
 
-  const categories = useMemo(
-    () => [
-      { name: "All", count: books.length },
-      ...CATEGORIES.map((item) => ({
-        name: item.name,
-        count: books.filter((book) => book.category === item.name).length,
-      })),
-    ],
-    [books]
-  );
+  const categories = [
+    { name: "All", count: books.length },
+    ...CATEGORIES.map((item) => ({
+      name: item.name,
+      count: books.filter((book) => book.category === item.name).length,
+    })),
+  ];
 
-  const results = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    const filtered = books.filter((book) => {
+  const results = books
+    .filter((book) => {
+      const needle = query.trim().toLowerCase();
       const matchesCategory = category === "All" || book.category === category;
       const matchesQuery =
         !needle ||
@@ -50,14 +47,12 @@ export default function BooksPage() {
           .toLowerCase()
           .includes(needle);
       return matchesCategory && matchesQuery;
-    });
-
-    return filtered.sort((a, b) => {
+    })
+    .sort((a, b) => {
       if (sort === "title") return a.title.localeCompare(b.title);
       if (sort === "available") return b.availableCopies - a.availableCopies;
       return new Date(b.createdAt) - new Date(a.createdAt);
     });
-  }, [books, category, query, sort]);
 
   const availableCount = books.filter((book) => book.availableCopies > 0).length;
 

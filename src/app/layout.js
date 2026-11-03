@@ -20,11 +20,11 @@ const fraunces = Fraunces({
 
 export const metadata = {
   title: {
-    default: "BookNook | Home",
-    template: "%s | BookNook",
+    default: "Friendly Library | Home",
+    template: "%s | Friendly Library",
   },
   description:
-    "BookNook is a friendly shared library. Browse the shelf, borrow a book for fourteen days, and pass a good story on.",
+    "Friendly Library is a shared online library. Browse the shelf, borrow a book for fourteen days, and pass a good story on.",
 };
 
 export default function RootLayout({ children }) {

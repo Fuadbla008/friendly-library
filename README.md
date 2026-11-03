@@ -1,6 +1,6 @@
-# BookNook
+# Friendly Library
 
-BookNook is a friendly shared library. Readers browse the shelf, add books from
+Friendly Library is a shared online library. Readers browse the shelf, add books from
 their own collection, borrow a copy for 14 days, and return it for the next
 person.
 
@@ -22,7 +22,7 @@ MongoDB API and uses BetterAuth for email/password and Google sign-in.
 - BetterAuth email/password and Google sign-in on top of MongoDB.
 - JWT bearer tokens on private API calls, with private routes that wait for the
   session before redirecting.
-- Custom 404, page titles in the `BookNook | Page` format, Sonner toasts, and
+- Custom 404, page titles in the `Friendly Library | Page` format, Sonner toasts, and
   custom modals instead of browser dialogs.
 - Accessible controls, keyboard-friendly navigation, and WCAG AA colour
   contrast.

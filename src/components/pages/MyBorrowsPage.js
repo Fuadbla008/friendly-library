@@ -204,7 +204,7 @@ function MyBorrowsContent() {
                         {borrow.bookTitle}
                       </Link>
                       <p className="mt-0.5 truncate text-[11px] text-ink/70">
-                        {book?.author || "Shared at BookNook"}
+                        {book?.author || "Shared at Friendly Library"}
                       </p>
                     </div>
                   </div>
@@ -256,7 +256,7 @@ function MyBorrowsContent() {
                         {borrow.bookTitle}
                       </Link>
                       <p className="mt-0.5 text-[11px] text-ink/70">
-                        {book?.author || "Shared at BookNook"}
+                        {book?.author || "Shared at Friendly Library"}
                       </p>
                       <span
                         className={`mt-2 inline-flex rounded-full border px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] ${status.tone}`}
@@ -298,7 +298,7 @@ function MyBorrowsContent() {
             <div className="mt-8 flex flex-col items-start justify-between gap-4 rounded-2xl border border-line bg-sage-light/35 px-6 py-5 sm:flex-row sm:items-center">
               <p className="max-w-2xl text-[12px] leading-6 text-ink/70">
                 <span className="font-semibold text-ink">Reading slowly?</span> That
-                is allowed. There are no late fees at BookNook — just return the book
+                is allowed. There are no late fees at Friendly Library — just return the book
                 when you are ready to pass it on.
               </p>
               <Link href="/books" className="link-underline shrink-0">

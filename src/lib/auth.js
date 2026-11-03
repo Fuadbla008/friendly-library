@@ -11,9 +11,9 @@ if (!uri) {
 
 // Reuse the client during development so hot reloads do not open a new pool.
 const globalForMongo = globalThis;
-const client = globalForMongo.__booknookMongoClient || new MongoClient(uri);
+const client = globalForMongo.__friendlyLibraryMongoClient || new MongoClient(uri);
 if (process.env.NODE_ENV !== "production") {
-  globalForMongo.__booknookMongoClient = client;
+  globalForMongo.__friendlyLibraryMongoClient = client;
 }
 
 const db = client.db(process.env.MONGODB_DB || "friendly_library");
@@ -25,7 +25,6 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
-    // The register form asks for six characters or more.
     minPasswordLength: 6,
   },
   socialProviders: {

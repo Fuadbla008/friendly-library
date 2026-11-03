@@ -3,7 +3,7 @@ import RegisterPage from "@/components/pages/RegisterPage";
 import PageLoader from "@/components/PageLoader";
 
 export const metadata = {
-  title: { absolute: "BookNook | Register" },
+  title: { absolute: "Friendly Library | Register" },
 };
 
 export default function Page() {

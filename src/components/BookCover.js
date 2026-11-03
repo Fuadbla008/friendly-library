@@ -36,8 +36,10 @@ export default function BookCover({
             className="h-1.5 w-8 rounded-full"
             style={{ backgroundColor: style.accent }}
           />
-          <span className="text-[8px] font-semibold uppercase tracking-[0.22em] text-ink/70">
-            BookNook
+          <span className="text-right text-[7px] font-semibold uppercase leading-[1.35] tracking-[0.18em] text-ink/70">
+            Friendly
+            <br />
+            Library
           </span>
         </div>
         <div>

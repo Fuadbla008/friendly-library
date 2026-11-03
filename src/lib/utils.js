@@ -26,14 +26,6 @@ export function formatDate(value, options = {}) {
   return new Intl.DateTimeFormat("en-US", merged).format(new Date(value));
 }
 
-export function formatShortDate(value) {
-  if (!value) return "—";
-  return new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(new Date(value));
-}
-
 export function daysUntil(value) {
   const target = new Date(value);
   const now = new Date();
@@ -72,15 +64,7 @@ export function loanStatus(value) {
   };
 }
 
-export function slugify(value = "") {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}
-
-export function readFileAsDataUrl(file) {
+function readFileAsDataUrl(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result);

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: { absolute: "BookNook | Book Details" },
+  title: { absolute: "Friendly Library | Book Details" },
 };
 
 export default function BookLayout({ children }) {

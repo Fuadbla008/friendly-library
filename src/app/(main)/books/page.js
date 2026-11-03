@@ -3,7 +3,7 @@ import BooksPage from "@/components/pages/BooksPage";
 import PageLoader from "@/components/PageLoader";
 
 export const metadata = {
-  title: { absolute: "BookNook | All Books" },
+  title: { absolute: "Friendly Library | All Books" },
 };
 
 export default function Page() {
