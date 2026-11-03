@@ -128,8 +128,8 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2.5">
                 <Mail className="h-3.5 w-3.5 shrink-0 text-sage" />
-                <a href="mailto:hello@booknook.demo" className="transition hover:text-parchment">
-                  hello@booknook.demo
+                <a href="mailto:hello@booknook.app" className="transition hover:text-parchment">
+                  hello@booknook.app
                 </a>
               </li>
               <li className="flex items-center gap-2.5">
