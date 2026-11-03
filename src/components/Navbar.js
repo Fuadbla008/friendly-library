@@ -81,19 +81,25 @@ export default function Navbar() {
   }, []);
 
   const links = user ? [...PUBLIC_LINKS, ...PRIVATE_LINKS] : PUBLIC_LINKS;
+  const emailsMatch = (value) =>
+    String(value || "").toLowerCase() === user?.email?.toLowerCase();
   const booksAdded = user
-    ? books.filter((book) => book.addedBy.email === user.email).length
+    ? books.filter((book) => emailsMatch(book.addedBy.email)).length
     : 0;
   const activeLoans = user
-    ? borrows.filter((borrow) => borrow.userEmail === user.email).length
+    ? borrows.filter((borrow) => emailsMatch(borrow.userEmail)).length
     : 0;
 
-  function handleLogout() {
-    logout();
-    setProfileOpen(false);
-    setProfileModal(false);
-    toast.success("Signed out. See you at the next chapter.");
-    router.push("/");
+  async function handleLogout() {
+    try {
+      await logout();
+      setProfileOpen(false);
+      setProfileModal(false);
+      toast.success("Signed out. See you at the next chapter.");
+      router.push("/");
+    } catch (error) {
+      toast.error(error.message || "Could not sign out. Please try again.");
+    }
   }
 
   return (

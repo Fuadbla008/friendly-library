@@ -38,6 +38,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const rawRedirect = searchParams.get("redirect") || "/";
   const redirectTo = rawRedirect.startsWith("/") ? rawRedirect : "/";
@@ -46,12 +48,7 @@ export default function LoginPage() {
     if (ready && user) router.replace(redirectTo);
   }, [ready, user, router, redirectTo]);
 
-  function finish(message) {
-    toast.success(message);
-    router.replace(redirectTo);
-  }
-
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const next = {};
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -61,22 +58,36 @@ export default function LoginPage() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    const result = login(email, password);
-    if (!result.ok) {
-      toast.error(result.error);
-      return;
+    setBusy(true);
+    try {
+      const { error } = await login(email, password);
+      if (error) {
+        toast.error(
+          error.message || "Could not log in. Check your email and password."
+        );
+        return;
+      }
+      toast.success("Welcome back. Your shelf is ready.");
+      router.replace(redirectTo);
+    } catch (error) {
+      toast.error(error.message || "Could not log in. Try again.");
+    } finally {
+      setBusy(false);
     }
-    finish("Welcome back. Your shelf is ready.");
   }
 
-  function handleGoogle() {
-    loginWithGoogle();
-    finish("Signed in with Google. Welcome, Ava.");
-  }
-
-  function handleDemo() {
-    login("ava@booknook.demo", "demo1234");
-    finish("You are in the demo library. Have a look around.");
+  async function handleGoogle() {
+    setGoogleBusy(true);
+    try {
+      const { error } = await loginWithGoogle(redirectTo);
+      if (error) {
+        toast.error(error.message || "Google sign-in could not start.");
+        setGoogleBusy(false);
+      }
+    } catch (error) {
+      toast.error(error.message || "Google sign-in could not start.");
+      setGoogleBusy(false);
+    }
   }
 
   return (
@@ -96,10 +107,11 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={handleGoogle}
-        className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-parchment py-3 text-[12px] font-semibold text-ink transition hover:border-ink/25 hover:bg-white"
+        disabled={googleBusy}
+        className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-parchment py-3 text-[12px] font-semibold text-ink transition hover:border-ink/25 hover:bg-white disabled:opacity-60"
       >
         <GoogleMark />
-        Continue with Google
+        {googleBusy ? "Opening Google…" : "Continue with Google"}
       </button>
 
       <div className="my-5 flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-ink/70">
@@ -139,7 +151,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() =>
-                toast("Password reset will be available with the live auth API.")
+                toast("Password reset emails are not set up yet. Contact hello@booknook.app for help.")
               }
               className="text-[10px] font-semibold text-terracotta/80 transition hover:text-terracotta"
             >
@@ -172,8 +184,8 @@ export default function LoginPage() {
           {errors.password ? <p className="field-error">{errors.password}</p> : null}
         </div>
 
-        <button type="submit" className="btn-brand w-full">
-          Log in to BookNook
+        <button type="submit" className="btn-brand w-full" disabled={busy}>
+          {busy ? "Logging in…" : "Log in to BookNook"}
           <MoveRight className="h-4 w-4" />
         </button>
       </form>
@@ -186,29 +198,6 @@ export default function LoginPage() {
         >
           Create a library card
         </Link>
-      </p>
-
-      <div className="mt-7 rounded-2xl border border-line bg-cream/55 px-4 py-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-[11px] font-semibold text-ink">Just exploring?</p>
-            <p className="mt-0.5 text-[10px] leading-4 text-ink/70">
-              Step into the demo account to see loans and listings in action.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleDemo}
-            className="shrink-0 rounded-full border border-ink/15 bg-parchment px-3.5 py-2 text-[10px] font-semibold text-ink transition hover:border-ink/30 hover:bg-white"
-          >
-            Enter as Ava
-          </button>
-        </div>
-      </div>
-
-      <p className="mt-5 text-center text-[9px] leading-5 text-ink/70">
-        Demo mode for the frontend preview. BetterAuth and the live JWT session will
-        replace this screen when the API is connected.
       </p>
     </div>
   );

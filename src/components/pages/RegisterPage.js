@@ -38,10 +38,12 @@ const passwordRules = [
 export default function RegisterPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { register, loginWithGoogle } = useAuth();
+  const { register, loginWithGoogle, logout } = useAuth();
   const [values, setValues] = useState({ name: "", email: "", photo: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const [googleBusy, setGoogleBusy] = useState(false);
 
   const rawRedirect = searchParams.get("redirect") || "";
   const redirectTo = rawRedirect.startsWith("/") ? rawRedirect : "";
@@ -54,7 +56,7 @@ export default function RegisterPage() {
     if (errors[field]) setErrors((current) => ({ ...current, [field]: undefined }));
   }
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     const next = {};
     if (!values.name.trim()) next.name = "Tell us what to call you.";
@@ -67,23 +69,42 @@ export default function RegisterPage() {
     setErrors(next);
     if (Object.keys(next).length) return;
 
-    const result = register({
-      name: values.name,
-      email: values.email,
-      photo: values.photo,
-    });
-    if (!result.ok) {
-      toast.error(result.error);
-      return;
+    setBusy(true);
+    try {
+      const { error } = await register({
+        name: values.name,
+        email: values.email,
+        photo: values.photo,
+        password: values.password,
+      });
+      if (error) {
+        toast.error(error.message || "Could not create your account.");
+        return;
+      }
+
+      // The assignment expects a fresh login after registration.
+      await logout();
+      toast.success("Your library card is ready. Log in to start borrowing.");
+      router.push(loginHref);
+    } catch (error) {
+      toast.error(error.message || "Could not create your account.");
+    } finally {
+      setBusy(false);
     }
-    toast.success("Your library card is ready. Log in to start borrowing.");
-    router.push(loginHref);
   }
 
-  function handleGoogle() {
-    loginWithGoogle();
-    toast.success("Signed in with Google. Welcome, Ava.");
-    router.replace(redirectTo || "/");
+  async function handleGoogle() {
+    setGoogleBusy(true);
+    try {
+      const { error } = await loginWithGoogle(redirectTo || "/");
+      if (error) {
+        toast.error(error.message || "Google sign-in could not start.");
+        setGoogleBusy(false);
+      }
+    } catch (error) {
+      toast.error(error.message || "Google sign-in could not start.");
+      setGoogleBusy(false);
+    }
   }
 
   return (
@@ -104,10 +125,11 @@ export default function RegisterPage() {
       <button
         type="button"
         onClick={handleGoogle}
-        className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-parchment py-3 text-[12px] font-semibold text-ink transition hover:border-ink/25 hover:bg-white"
+        disabled={googleBusy}
+        className="mt-7 flex w-full items-center justify-center gap-2.5 rounded-xl border border-line bg-parchment py-3 text-[12px] font-semibold text-ink transition hover:border-ink/25 hover:bg-white disabled:opacity-60"
       >
         <GoogleMark />
-        Continue with Google
+        {googleBusy ? "Opening Google…" : "Continue with Google"}
       </button>
 
       <div className="my-5 flex items-center gap-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-ink/70">
@@ -222,8 +244,8 @@ export default function RegisterPage() {
           {errors.password ? <p className="field-error">{errors.password}</p> : null}
         </div>
 
-        <button type="submit" className="btn-brand w-full">
-          Create my library card
+        <button type="submit" className="btn-brand w-full" disabled={busy}>
+          {busy ? "Creating your card…" : "Create my library card"}
           <MoveRight className="h-4 w-4" />
         </button>
       </form>
@@ -233,11 +255,6 @@ export default function RegisterPage() {
         <Link href={loginHref} className="font-semibold text-terracotta transition hover:text-terracotta-dark">
           Log in
         </Link>
-      </p>
-
-      <p className="mt-5 text-center text-[9px] leading-5 text-ink/70">
-        Demo mode for the frontend preview. Registration will connect to BetterAuth
-        and MongoDB when the API is ready.
       </p>
     </div>
   );
