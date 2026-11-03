@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { CATEGORIES } from "@/lib/seed";
+import { CATEGORIES } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
 function categoryStyle(category) {

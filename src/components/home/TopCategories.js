@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight, BookOpen, FlaskConical, Landmark, Sparkles, Sprout } from "lucide-react";
 import SectionHeading from "@/components/SectionHeading";
 import { useLibrary } from "@/lib/library-context";
-import { CATEGORIES } from "@/lib/seed";
+import { CATEGORIES } from "@/lib/categories";
 
 const icons = {
   book: BookOpen,
